@@ -1,0 +1,16 @@
+1.0: Pulling from mateusmendes0/atividadedevops
+fd4d850d0587: Pulling fs layer
+b2fbf125dba7: Pulling fs layer
+8def3cb2eb58: Pulling fs layer
+4fb3d3e1f04a: Pulling fs layer
+fd4d850d0587: Download complete
+b2fbf125dba7: Download complete
+8def3cb2eb58: Download complete
+8def3cb2eb58: Pull complete
+b2fbf125dba7: Pull complete
+4fb3d3e1f04a: Download complete
+4fb3d3e1f04a: Pull complete
+fd4d850d0587: Pull complete
+Digest: sha256:d57b2ab2e0ad13124aa64031be15af49136acfb3db2e2a1f8cb8040ba856695e
+Status: Downloaded newer image for ghcr.io/mateusmendes0/atividadedevops:1.0
+ghcr.io/mateusmendes0/atividadedevops:1.0

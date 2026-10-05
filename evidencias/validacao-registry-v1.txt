@@ -1,0 +1,48 @@
+Validacao da imagem publicada no GHCR - versao 1.0 - passo 7
+Data: 2026-10-05 16:01:27 (America/Sao_Paulo)
+Pipeline bem-sucedida: https://github.com/MateusMendes0/atividadeDevOps/actions/runs/37359216432
+
+Comando: docker pull ghcr.io/mateusmendes0/atividadedevops:1.0
+1.0: Pulling from mateusmendes0/atividadedevops
+fd4d850d0587: Pulling fs layer
+b2fbf125dba7: Pulling fs layer
+8def3cb2eb58: Pulling fs layer
+4fb3d3e1f04a: Pulling fs layer
+fd4d850d0587: Download complete
+b2fbf125dba7: Download complete
+8def3cb2eb58: Download complete
+8def3cb2eb58: Pull complete
+b2fbf125dba7: Pull complete
+4fb3d3e1f04a: Download complete
+4fb3d3e1f04a: Pull complete
+fd4d850d0587: Pull complete
+Digest: sha256:d57b2ab2e0ad13124aa64031be15af49136acfb3db2e2a1f8cb8040ba856695e
+Status: Downloaded newer image for ghcr.io/mateusmendes0/atividadedevops:1.0
+ghcr.io/mateusmendes0/atividadedevops:1.0
+
+Comando: docker stop atividadedevops-v1
+Container anterior parado para liberar a porta 8081.
+
+Comando: docker run -d --name atividadedevops-registry-v1 -p 8081:8080 ghcr.io/mateusmendes0/atividadedevops:1.0
+Container: /atividadedevops-registry-v1 | Status: running | RestartCount: 0 | Erro: "" | Imagem: ghcr.io/mateusmendes0/atividadedevops:1.0 | Portas: {"8080/tcp":[{"HostIp":"0.0.0.0","HostPort":"8081"},{"HostIp":"::","HostPort":"8081"}]}
+Tag: ghcr.io/mateusmendes0/atividadedevops:1.0 | ID: sha256:d57b2ab2e0ad13124aa64031be15af49136acfb3db2e2a1f8cb8040ba856695e | Digests: ["ghcr.io/mateusmendes0/atividadedevops@sha256:d57b2ab2e0ad13124aa64031be15af49136acfb3db2e2a1f8cb8040ba856695e"]
+Verificacao: o ID da imagem do container corresponde ao ID da imagem baixada do registry.
+
+Comando: curl.exe -i http://localhost:8081/hello
+HTTP/1.1 200 OK
+date: Mon, 05 Oct 2026 19:01:25 GMT
+server: uvicorn
+content-length: 11
+content-type: text/plain; charset=utf-8
+
+Hello World
+
+Comando: docker logs atividadedevops-registry-v1
+INFO:     172.17.0.1:60108 - "GET /hello HTTP/1.1" 200 OK
+INFO:     172.17.0.1:60122 - "GET /hello HTTP/1.1" 200 OK
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+
+Resultado: imagem baixada diretamente do GHCR; container em execucao sem erro; endpoint retorna HTTP 200 e Hello World.

@@ -1,7 +1,7 @@
 # Atividade DevOps com FastAPI
 
-Aplicação inicial do exercício de Docker, GitHub Actions e Container Registry.
-O endpoint `GET /hello` retorna `Hello World` em texto puro.
+Aplicação do exercício de Docker, GitHub Actions e Container Registry.
+Na versão atual (`2.0`), o endpoint `GET /hello` retorna `Hello World 2` em texto puro.
 
 ## Executar localmente
 
@@ -22,7 +22,7 @@ curl.exe http://localhost:8080/hello
 Resposta esperada:
 
 ```text
-Hello World
+Hello World 2
 ```
 
 A documentação interativa da API fica em <http://localhost:8080/docs>.
@@ -33,16 +33,16 @@ Para encerrar o servidor, pressione `Ctrl+C`.
 Com o Docker em execução, rode na raiz do projeto:
 
 ```powershell
-docker build -t atividadedevops:1.0 .
+docker build -t atividadedevops:2.0 .
 ```
 
 O `Dockerfile` utiliza Python 3.13, instala as dependências e inicia a aplicação
 com Uvicorn na porta 8080. O `.dockerignore` exclui o ambiente virtual local e
 outros arquivos desnecessários do contexto de build.
 
-## Validar o container localmente
+## Validação local da versão 1.0
 
-Na validação, a porta 8080 da máquina estava ocupada. Por isso, foi utilizada a
+Na primeira validação, a porta 8080 da máquina estava ocupada. Por isso, foi utilizada a
 porta externa 8081, mantendo a aplicação na porta 8080 dentro do container:
 
 ```powershell
@@ -69,6 +69,22 @@ docker stop atividadedevops-v1
 docker start atividadedevops-v1
 ```
 
+## Validar a versão 2.0 localmente
+
+Em uma porta livre, execute a imagem local da nova versão:
+
+```powershell
+docker run --rm -p 8082:8080 atividadedevops:2.0
+```
+
+Em outro terminal:
+
+```powershell
+curl.exe -i http://localhost:8082/hello
+```
+
+Resposta esperada: status `HTTP/1.1 200 OK` e corpo `Hello World 2`.
+
 ## Pipeline do GitHub Actions
 
 O arquivo [.github/workflows/docker.yml](.github/workflows/docker.yml) configura
@@ -78,11 +94,26 @@ a execução automática em cada push para a branch `main`. O fluxo é:
 2. Construir a imagem com o `Dockerfile` da raiz.
 3. Verificar a existência da imagem com `docker image inspect`.
 4. Autenticar no GitHub Container Registry (GHCR).
-5. Publicar `ghcr.io/mateusmendes0/atividadedevops:1.0`.
+5. Publicar `ghcr.io/mateusmendes0/atividadedevops:2.0`.
 
 A autenticação utiliza `secrets.GITHUB_TOKEN`, fornecido automaticamente pelo
 GitHub Actions, com as permissões `contents: read` e `packages: write` declaradas
 no workflow. Não é necessário cadastrar um token manualmente para este fluxo.
 
-A versão da imagem é definida em `IMAGE_VERSION`, inicialmente `1.0`.
-A pipeline começará a executar quando este arquivo for enviado para `main`.
+A versão da imagem é definida em `IMAGE_VERSION`, atualmente `2.0`.
+O push para `main` dispara uma nova execução da pipeline e publica essa tag.
+
+## Versões da imagem no GHCR
+
+| Imagem | Resposta de `GET /hello` |
+| --- | --- |
+| `ghcr.io/mateusmendes0/atividadedevops:1.0` | `Hello World` |
+| `ghcr.io/mateusmendes0/atividadedevops:2.0` | `Hello World 2` |
+
+A atualização da pipeline para a tag `2.0` preserva a tag `1.0` no registry.
+A primeira publicação foi concluída nesta [execução do GitHub Actions](https://github.com/MateusMendes0/atividadeDevOps/actions/runs/37359216432).
+
+As evidências do download e da execução da imagem `1.0` publicada estão em
+[evidencias/validacao-registry-v1.txt](evidencias/validacao-registry-v1.txt).
+As evidências do build e do teste local da versão `2.0` estão em
+[evidencias/validacao-local-v2.txt](evidencias/validacao-local-v2.txt).

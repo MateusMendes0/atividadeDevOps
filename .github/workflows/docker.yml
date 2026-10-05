@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: mateusmendes0/atividadedevops
-  IMAGE_VERSION: "1.0"
+  IMAGE_VERSION: "2.0"
 
 permissions:
   contents: read
