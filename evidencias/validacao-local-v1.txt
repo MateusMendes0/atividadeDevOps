@@ -1,0 +1,28 @@
+Validacao local da imagem Docker - versao 1.0
+Data: 2026-10-05 15:37:36 (America/Sao_Paulo)
+
+Build executado com sucesso na etapa 2: docker build -t atividadedevops:1.0 .
+Tag: atividadedevops:1.0 | ID: sha256:494cd191c41b1839053b322473a9026c537b1b97eebb791679da26ad825347d1
+
+Comando: docker run -d --name atividadedevops-v1 -p 8081:8080 atividadedevops:1.0
+Porta externa 8081 utilizada porque a porta 8080 da maquina estava ocupada.
+Container: /atividadedevops-v1 | Status: running | Running: true | RestartCount: 0 | Erro: "" | Imagem: atividadedevops:1.0 | Portas: {"8080/tcp":[{"HostIp":"0.0.0.0","HostPort":"8081"},{"HostIp":"::","HostPort":"8081"}]}
+
+Comando: curl.exe -i http://localhost:8081/hello
+HTTP/1.1 200 OK
+date: Mon, 05 Oct 2026 18:37:35 GMT
+server: uvicorn
+content-length: 11
+content-type: text/plain; charset=utf-8
+
+Hello World
+
+Comando: docker logs atividadedevops-v1
+INFO:     172.17.0.1:49884 - "GET /hello HTTP/1.1" 200 OK
+INFO:     172.17.0.1:49892 - "GET /hello HTTP/1.1" 200 OK
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+
+Resultado: imagem existente; container em execucao sem erro; GET /hello retorna HTTP 200 e Hello World.
