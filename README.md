@@ -68,3 +68,21 @@ Para parar o container e, posteriormente, iniciar o mesmo container novamente:
 docker stop atividadedevops-v1
 docker start atividadedevops-v1
 ```
+
+## Pipeline do GitHub Actions
+
+O arquivo [.github/workflows/docker.yml](.github/workflows/docker.yml) configura
+a execução automática em cada push para a branch `main`. O fluxo é:
+
+1. Baixar o código do repositório.
+2. Construir a imagem com o `Dockerfile` da raiz.
+3. Verificar a existência da imagem com `docker image inspect`.
+4. Autenticar no GitHub Container Registry (GHCR).
+5. Publicar `ghcr.io/mateusmendes0/atividadedevops:1.0`.
+
+A autenticação utiliza `secrets.GITHUB_TOKEN`, fornecido automaticamente pelo
+GitHub Actions, com as permissões `contents: read` e `packages: write` declaradas
+no workflow. Não é necessário cadastrar um token manualmente para este fluxo.
+
+A versão da imagem é definida em `IMAGE_VERSION`, inicialmente `1.0`.
+A pipeline começará a executar quando este arquivo for enviado para `main`.
