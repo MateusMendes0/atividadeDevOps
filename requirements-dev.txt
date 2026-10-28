@@ -325,6 +325,11 @@ pydantic-core==2.50.1 \
     # via
     #   -c requirements.txt
     #   pydantic
+python-multipart==0.0.12 \
+    --hash=sha256:43dcf96cf65888a9cd3423544dd0d75ac10f7aa0c3c28a175bbcd00c9ce1aebf
+    # via
+    #   -c requirements.txt
+    #   -r requirements.in
 starlette==1.10.0 \
     --hash=sha256:478c0ab3b4ced6e82719849c118fa406f0278a3499c1a898cd15cd31bdc38ce4
     # via
