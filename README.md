@@ -91,10 +91,12 @@ Resposta esperada: status `HTTP/1.1 200 OK` e corpo `Hello World 2`.
 ## Pipeline do GitHub Actions
 
 O arquivo [.github/workflows/docker.yml](.github/workflows/docker.yml) configura
-a execução automática em pushes para `main` e `feat/devsecops`, além da abertura,
-reabertura e atualização de Pull Requests para `main`. O fluxo é:
+a execução automática em pushes para `main`, além da abertura, reabertura e
+atualização de Pull Requests para `main`. Novos pushes na `feat/devsecops`
+atualizam o PR aberto e executam essas verificações. O fluxo é:
 
-1. Executar Gitleaks, testes e Trivy nas dependências.
+1. Executar Gitleaks, testes e Trivy nas dependências, além do SonarCloud
+   com a cobertura gerada pelos testes.
 2. Após a aprovação dessas verificações, construir a imagem Docker.
 3. Gerar o SBOM da imagem com Syft e analisar a imagem com Trivy.
 4. Salvar os relatórios e o SBOM como artifacts da execução.
@@ -189,9 +191,22 @@ O bloqueio inicial da imagem e a correção estão registrados em
 
 ## SonarCloud
 
-A integração do SonarCloud com Quality Gate ainda depende da criação e
-configuração do projeto no serviço. Essa etapa e a demonstração de bloqueio
-e correção em Pull Request ainda estão pendentes.
+O job **SonarCloud** analisa a aplicação Python, o Dockerfile e os workflows,
+além de importar a cobertura dos testes. O arquivo `sonar-project.properties`
+identifica a organização `mateusmendes0` e o projeto
+`MateusMendes0_atividadeDevOps`. A autenticação usa o secret `SONAR_TOKEN`
+cadastrado no GitHub.
+
+O projeto utiliza o Quality Gate **Sonar way**, voltado ao código novo:
+
+- Classificação A em segurança, confiabilidade e manutenibilidade.
+- Cobertura mínima de 80%.
+- Duplicação máxima de 3%.
+- Revisão de 100% dos security hotspots.
+
+A opção `sonar.qualitygate.wait=true` faz a análise aguardar o resultado do
+Quality Gate. Se o gate reprovar, a execução falha e impede o build e a
+publicação da imagem. A análise roda em PRs para `main` e em pushes para `main`.
 
 ## Versões da imagem no GHCR
 
