@@ -1,0 +1,10 @@
+Aprovação do SonarCloud
+
+O SonarCloud analisou o projeto e aprovou a verificação de qualidade.
+As outras verificações da mesma execução também passaram.
+
+Execução aprovada:
+https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40623787598
+
+Pull Request:
+https://github.com/MateusMendes0/atividadeDevOps/pull/1

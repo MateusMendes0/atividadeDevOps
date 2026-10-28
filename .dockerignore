@@ -4,3 +4,7 @@ __pycache__/
 .git/
 .env
 .env.*
+.coverage
+coverage.xml
+tests/
+requirements-dev.txt

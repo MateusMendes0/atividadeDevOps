@@ -1,0 +1,34 @@
+Validação das verificações DevSecOps no GitHub Actions
+
+Branch: feat/devsecops
+Commit: d5b8f5b
+Pull Request: https://github.com/MateusMendes0/atividadeDevOps/pull/1
+
+Execução no PR:
+https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40621147542
+
+Execução no push:
+https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40621143684
+
+Resultados aprovados nas duas execuções:
+- Gitleaks: análise do histórico sem secrets detectados.
+- Testes: verificação do endpoint /hello e relatório de cobertura.
+- Trivy: nenhuma vulnerabilidade HIGH ou CRITICAL com correção disponível.
+  As demais ocorrências continuam registradas no relatório completo.
+- Container: endpoint retornando HTTP 200 e Hello World 2.
+- Syft: SBOM da imagem gerado e publicado como artifact.
+  Conteúdo validado em formato SPDX 2.3, com 103 componentes.
+
+Artifacts disponíveis na execução do PR:
+- gitleaks-report
+- cobertura
+- trivy-dependencias
+- trivy-imagem
+- sbom-imagem
+
+A publicação no GHCR foi ignorada, pois a execução não era um push para main.
+A main está protegida para exigir as verificações de segurança.
+
+A aprovação do SonarCloud foi registrada em validacao-sonarcloud.txt.
+A demonstração de bloqueio e correção, com as capturas, está registrada em
+demonstracao-bloqueio-correcao.txt.

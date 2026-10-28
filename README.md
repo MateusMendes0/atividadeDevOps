@@ -39,6 +39,9 @@ docker build -t atividadedevops:2.0 .
 O `Dockerfile` utiliza Python 3.13, instala as dependências e inicia a aplicação
 com Uvicorn na porta 8080. O `.dockerignore` exclui o ambiente virtual local e
 outros arquivos desnecessários do contexto de build.
+Após instalar as dependências, o build remove o pip, que não é necessário para
+executar a API e incluía bibliotecas vulneráveis na imagem base. A pipeline
+também inicia um container e confirma a resposta de `/hello` antes das análises.
 
 ## Validação local da versão 1.0
 
@@ -88,20 +91,141 @@ Resposta esperada: status `HTTP/1.1 200 OK` e corpo `Hello World 2`.
 ## Pipeline do GitHub Actions
 
 O arquivo [.github/workflows/docker.yml](.github/workflows/docker.yml) configura
-a execução automática em cada push para a branch `main`. O fluxo é:
+a execução automática em pushes para `main`, além da abertura, reabertura e
+atualização de Pull Requests para `main`. Novos pushes na `feat/devsecops`
+atualizam o PR aberto e executam essas verificações. O fluxo é:
 
-1. Baixar o código do repositório.
-2. Construir a imagem com o `Dockerfile` da raiz.
-3. Verificar a existência da imagem com `docker image inspect`.
-4. Autenticar no GitHub Container Registry (GHCR).
-5. Publicar `ghcr.io/mateusmendes0/atividadedevops:2.0`.
+1. Executar Gitleaks, testes e Trivy nas dependências, além do SonarCloud
+   com a cobertura gerada pelos testes.
+2. Após a aprovação dessas verificações, construir a imagem Docker.
+3. Gerar o SBOM da imagem com Syft e analisar a imagem com Trivy.
+4. Salvar os relatórios e o SBOM como artifacts da execução.
+5. Somente em push para `main`, publicar a imagem no GHCR após todas as
+   verificações obrigatórias passarem.
 
 A autenticação utiliza `secrets.GITHUB_TOKEN`, fornecido automaticamente pelo
 GitHub Actions, com as permissões `contents: read` e `packages: write` declaradas
-no workflow. Não é necessário cadastrar um token manualmente para este fluxo.
+no job `build-and-push`. O job Gitleaks tem apenas `contents: read`.
+Não é necessário cadastrar um token manualmente para este fluxo.
 
 A versão da imagem é definida em `IMAGE_VERSION`, atualmente `2.0`.
 O push para `main` dispara uma nova execução da pipeline e publica essa tag.
+
+## Segurança com Gitleaks
+
+O check **Gitleaks** utiliza a imagem Docker oficial
+`ghcr.io/gitleaks/gitleaks:v8.30.1`, executada diretamente pelo GitHub Actions,
+com as regras padrão da ferramenta. Não exige instalação manual nem um secret
+ou token adicional.
+
+O checkout usa `fetch-depth: 0`, e a análise usa `gitleaks git` com
+`--log-opts=--all` para examinar todo o histórico das referências disponíveis
+no checkout. Assim, uma credencial pode ser detectada mesmo após ser removida
+da versão atual de um arquivo.
+
+Uma possível credencial exposta faz a verificação terminar com código `1`.
+Como `build-and-push` depende desse job, a falha impede o build e a publicação
+da imagem. Erros ao baixar a imagem do Gitleaks ou executar a análise também
+fazem o job falhar.
+Pushes na branch de implementação e Pull Requests nunca publicam imagens.
+
+Os logs mostram o local das detecções, e `--redact=100` oculta os valores dos
+secrets nos logs e no relatório. O arquivo JSON fica disponível no artifact
+`gitleaks-report` por 14 dias, inclusive quando a análise encontra problemas.
+Se a execução falhar antes de gerar o relatório, o artifact não estará disponível.
+
+Testes de detecção devem usar somente credenciais fictícias. Não inclua uma
+credencial de teste no histórico principal: mesmo apagando o arquivo em outro
+commit, o histórico continuará contendo a detecção. As validações locais de
+detecção podem ser feitas em um repositório temporário separado.
+
+Os resultados da validação local estão em
+[evidencias/validacao-gitleaks-local.txt](evidencias/validacao-gitleaks-local.txt).
+Esses testes não substituem a evidência de execução do GitHub Actions e do
+bloqueio de merge exigida pela atividade.
+
+O Gitleaks e o build também foram aprovados no GitHub Actions. Os links e os
+resultados estão em
+[evidencias/validacao-gitleaks-github.txt](evidencias/validacao-gitleaks-github.txt).
+
+## Testes da aplicação
+
+O teste automatizado verifica o status HTTP, a mensagem `Hello World 2` e o
+tipo de resposta em texto puro do endpoint `/hello`. Para executar localmente:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m coverage run --branch --source=main -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m coverage xml
+```
+
+O relatório `coverage.xml` é disponibilizado no artifact `cobertura`.
+
+As dependências diretas ficam nos arquivos `.in`. Os arquivos `.txt` são
+gerados com pip-tools e travam também as versões indiretas e seus hashes.
+O Docker e os testes instalam apenas pacotes binários com hashes verificados.
+
+## Análise de vulnerabilidades com Trivy
+
+O Trivy analisa os arquivos de dependências do projeto e a imagem Docker
+construída. Cada análise gera um relatório JSON com todas as severidades,
+incluindo vulnerabilidades sem correção disponível.
+
+Uma segunda verificação bloqueia a execução quando encontra vulnerabilidades
+**HIGH** ou **CRITICAL** com correção disponível. Vulnerabilidades **LOW** e
+**MEDIUM** ficam registradas no relatório e não bloqueiam a execução.
+Erros na ferramenta ou na obtenção da base de vulnerabilidades fazem o job
+falhar; o código de saída zero da etapa de relatório não desativa o bloqueio.
+
+Os artifacts `trivy-dependencias` e `trivy-imagem` guardam os relatórios por
+14 dias, inclusive quando a verificação seguinte encontra uma vulnerabilidade.
+
+## SBOM da imagem com Syft
+
+O Syft, executado pela action `anchore/sbom-action`, gera o inventário dos
+componentes e versões da imagem que acabou de ser construída. O arquivo
+`sbom.spdx.json` fica disponível no artifact `sbom-imagem` por 14 dias.
+O SBOM é gerado antes do bloqueio do Trivy na imagem, permitindo consultar
+seus componentes mesmo quando essa verificação reprova a imagem.
+
+Os resultados aprovados no GitHub Actions estão em
+[evidencias/validacao-devsecops-github.txt](evidencias/validacao-devsecops-github.txt).
+O bloqueio inicial da imagem e a correção estão registrados em
+[evidencias/validacao-trivy-bloqueio.txt](evidencias/validacao-trivy-bloqueio.txt).
+
+## SonarCloud
+
+O job **SonarCloud** analisa a aplicação Python, o Dockerfile e os workflows,
+além de importar a cobertura dos testes. O arquivo `sonar-project.properties`
+identifica a organização `mateusmendes0` e o projeto
+`MateusMendes0_atividadeDevOps`. A autenticação usa o secret `SONAR_TOKEN`
+cadastrado no GitHub.
+
+O projeto utiliza o Quality Gate **Sonar way**, voltado ao código novo:
+
+- Classificação A em segurança, confiabilidade e manutenibilidade.
+- Cobertura mínima de 80%.
+- Duplicação máxima de 3%.
+- Revisão de 100% dos security hotspots.
+
+A opção `sonar.qualitygate.wait=true` faz a análise aguardar o resultado do
+Quality Gate. Se o gate reprovar, a execução falha e impede o build e a
+publicação da imagem. A análise roda em PRs para `main` e em pushes para `main`.
+
+## Demonstração de bloqueio e correção
+
+No [PR #2](https://github.com/MateusMendes0/atividadeDevOps/pull/2), usei
+python-multipart `0.0.12`, com uma vulnerabilidade conhecida. O Trivy reprovou
+a análise e o GitHub bloqueou o merge. Depois atualizei a dependência para
+`0.0.32` no mesmo PR, e todas as verificações foram aprovadas.
+A imagem da branch de teste não foi publicada e não fiz merge desse PR.
+
+Os links e os resultados estão em
+[evidencias/demonstracao-bloqueio-correcao.txt](evidencias/demonstracao-bloqueio-correcao.txt).
+
+- [Captura do PR bloqueado](evidencias/pr-bloqueado.jpg)
+- [Relatório da vulnerabilidade](evidencias/trivy-vulnerabilidade.jpg)
+- [Captura do PR aprovado após a correção](evidencias/pr-aprovado.jpg)
 
 ## Versões da imagem no GHCR
 

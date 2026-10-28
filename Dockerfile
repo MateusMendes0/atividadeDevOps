@@ -6,7 +6,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN python -m pip install --no-cache-dir -r requirements.txt
+# O pip é necessário apenas durante a instalação das dependências.
+RUN python -m pip install --no-cache-dir --only-binary=:all: --require-hashes -r requirements.txt \
+    && python -m pip uninstall --yes pip
 
 COPY main.py .
 
