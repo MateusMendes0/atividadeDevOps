@@ -138,6 +138,16 @@ jobs:
       - name: Verificar se a imagem foi criada
         run: docker image inspect "${REGISTRY}/${IMAGE_NAME}:${IMAGE_VERSION}"
 
+      - name: Testar a aplicação na imagem construída
+        run: |
+          trap 'docker logs atividade-devops-smoke; docker rm -f atividade-devops-smoke' EXIT
+          docker run -d --name atividade-devops-smoke \
+            -p 127.0.0.1:8080:8080 "${REGISTRY}/${IMAGE_NAME}:${IMAGE_VERSION}"
+          response=$(curl --fail --silent --show-error \
+            --retry 10 --retry-connrefused --retry-delay 1 \
+            http://127.0.0.1:8080/hello)
+          test "$response" = "Hello World 2"
+
       - name: Gerar SBOM da imagem com Syft
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:

@@ -39,6 +39,9 @@ docker build -t atividadedevops:2.0 .
 O `Dockerfile` utiliza Python 3.13, instala as dependências e inicia a aplicação
 com Uvicorn na porta 8080. O `.dockerignore` exclui o ambiente virtual local e
 outros arquivos desnecessários do contexto de build.
+Após instalar as dependências, o build remove o pip, que não é necessário para
+executar a API e incluía bibliotecas vulneráveis na imagem base. A pipeline
+também inicia um container e confirma a resposta de `/hello` antes das análises.
 
 ## Validação local da versão 1.0
 

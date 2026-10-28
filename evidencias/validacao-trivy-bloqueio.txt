@@ -1,0 +1,26 @@
+Bloqueio da imagem pelo Trivy
+
+Branch: feat/devsecops
+Commit: d93448b
+Pull Request: https://github.com/MateusMendes0/atividadeDevOps/pull/1
+Execução: https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40620461948
+
+Resultados:
+- Gitleaks, testes e Trivy das dependências aprovados.
+- SBOM da imagem gerado e salvo no artifact sbom-imagem.
+- Análise da imagem reprovada por cinco vulnerabilidades HIGH com correção.
+- Relatório completo salvo no artifact trivy-imagem.
+- A imagem não foi publicada.
+
+Componentes apontados no relatório:
+- msgpack 1.1.2: CVE-2026-114613 e GHSA-6v7p-g79w-8964.
+- setuptools 70.3.0: CVE-2025-47273.
+- urllib3 2.7.0: CVE-2026-97687 e CVE-2026-97689.
+
+Esses componentes vinham das bibliotecas incluídas no pip da imagem base.
+A correção remove o pip após instalar as dependências, pois ele não é necessário
+para executar a API. A nova execução deve confirmar a correção e o funcionamento
+do endpoint dentro do container.
+
+Este foi um bloqueio real da imagem inicial. A demonstração intencional em uma
+branch de teste separada ainda está pendente.
