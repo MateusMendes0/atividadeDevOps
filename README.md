@@ -182,6 +182,11 @@ componentes e versões da imagem que acabou de ser construída. O arquivo
 O SBOM é gerado antes do bloqueio do Trivy na imagem, permitindo consultar
 seus componentes mesmo quando essa verificação reprova a imagem.
 
+Os resultados aprovados no GitHub Actions estão em
+[evidencias/validacao-devsecops-github.txt](evidencias/validacao-devsecops-github.txt).
+O bloqueio inicial da imagem e a correção estão registrados em
+[evidencias/validacao-trivy-bloqueio.txt](evidencias/validacao-trivy-bloqueio.txt).
+
 ## SonarCloud
 
 A integração do SonarCloud com Quality Gate ainda depende da criação e

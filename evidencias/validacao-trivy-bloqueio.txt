@@ -19,8 +19,11 @@ Componentes apontados no relatório:
 
 Esses componentes vinham das bibliotecas incluídas no pip da imagem base.
 A correção remove o pip após instalar as dependências, pois ele não é necessário
-para executar a API. A nova execução deve confirmar a correção e o funcionamento
-do endpoint dentro do container.
+para executar a API. Após a correção, a análise da imagem foi aprovada e o
+endpoint retornou HTTP 200 com a mensagem esperada dentro do container.
+
+Execução aprovada:
+https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40621147542
 
 Este foi um bloqueio real da imagem inicial. A demonstração intencional em uma
 branch de teste separada ainda está pendente.
