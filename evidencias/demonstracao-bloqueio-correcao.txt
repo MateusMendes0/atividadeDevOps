@@ -1,0 +1,23 @@
+Demonstração de bloqueio e correção
+
+Pull Request: https://github.com/MateusMendes0/atividadeDevOps/pull/2
+Branch: test/dependencia-vulneravel
+
+Antes da correção:
+Usei python-multipart 0.0.12, com a vulnerabilidade CVE-2024-53981.
+O Trivy reprovou a análise e o GitHub bloqueou o merge.
+https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40624734217
+
+Depois da correção:
+Atualizei para python-multipart 0.0.32 no mesmo PR.
+Todas as verificações foram aprovadas.
+https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40625029190
+
+Capturas salvas nesta pasta:
+- pr-bloqueado.jpg
+- trivy-vulnerabilidade.jpg
+- pr-aprovado.jpg
+
+Não houve publicação da imagem nem merge dessa branch.
+O PR foi fechado depois da demonstração, ao renomear a branch.
+As capturas foram salvas antes da renomeação da branch.

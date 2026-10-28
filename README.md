@@ -212,6 +212,21 @@ A opção `sonar.qualitygate.wait=true` faz a análise aguardar o resultado do
 Quality Gate. Se o gate reprovar, a execução falha e impede o build e a
 publicação da imagem. A análise roda em PRs para `main` e em pushes para `main`.
 
+## Demonstração de bloqueio e correção
+
+No [PR #2](https://github.com/MateusMendes0/atividadeDevOps/pull/2), usei
+python-multipart `0.0.12`, com uma vulnerabilidade conhecida. O Trivy reprovou
+a análise e o GitHub bloqueou o merge. Depois atualizei a dependência para
+`0.0.32` no mesmo PR, e todas as verificações foram aprovadas.
+A imagem da branch de teste não foi publicada e não fiz merge desse PR.
+
+Os links e os resultados estão em
+[evidencias/demonstracao-bloqueio-correcao.txt](evidencias/demonstracao-bloqueio-correcao.txt).
+
+- [Captura do PR bloqueado](evidencias/pr-bloqueado.jpg)
+- [Relatório da vulnerabilidade](evidencias/trivy-vulnerabilidade.jpg)
+- [Captura do PR aprovado após a correção](evidencias/pr-aprovado.jpg)
+
 ## Versões da imagem no GHCR
 
 | Imagem | Resposta de `GET /hello` |

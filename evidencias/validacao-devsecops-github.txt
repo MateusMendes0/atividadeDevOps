@@ -27,7 +27,8 @@ Artifacts disponíveis na execução do PR:
 - sbom-imagem
 
 A publicação no GHCR foi ignorada, pois a execução não era um push para main.
-A main está protegida para exigir os quatro checks implementados.
+A main está protegida para exigir as verificações de segurança.
 
-Ainda faltam a integração do SonarCloud com Quality Gate, a demonstração
-intencional em uma branch de teste e as capturas finais para a entrega.
+A aprovação do SonarCloud foi registrada em validacao-sonarcloud.txt.
+A demonstração de bloqueio e correção, com as capturas, está registrada em
+demonstracao-bloqueio-correcao.txt.

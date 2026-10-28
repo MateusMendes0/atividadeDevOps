@@ -25,5 +25,5 @@ endpoint retornou HTTP 200 com a mensagem esperada dentro do container.
 Execução aprovada:
 https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40621147542
 
-Este foi um bloqueio real da imagem inicial. A demonstração intencional em uma
-branch de teste separada ainda está pendente.
+Este foi um bloqueio real da imagem inicial. A demonstração em uma branch
+de teste separada está registrada em demonstracao-bloqueio-correcao.txt.
