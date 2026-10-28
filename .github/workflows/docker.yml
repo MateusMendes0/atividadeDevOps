@@ -1,4 +1,4 @@
-name: Docker - Build e publicação
+name: DevSecOps - Verificações e imagem Docker
 
 on:
   push:
@@ -47,10 +47,79 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-  build-and-push:
-    needs: gitleaks
+  testes:
+    name: Testes
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Configurar Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependências de teste
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Executar testes e gerar cobertura
+        run: |
+          python -m coverage run --branch --source=main -m unittest discover -s tests -v
+          python -m coverage xml
+
+      - name: Salvar cobertura
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cobertura
+          path: coverage.xml
+          retention-days: 14
+
+  trivy-dependencias:
+    name: Trivy - dependências
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Gerar relatório de todas as severidades
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.1
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+          format: json
+          output: trivy-dependencias.json
+
+      - name: Bloquear HIGH e CRITICAL com correção disponível
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: Salvar relatório das dependências
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trivy-dependencias
+          path: trivy-dependencias.json
+          retention-days: 14
+
+  build-and-push:
+    name: Imagem, Trivy e SBOM
+    needs: [gitleaks, testes, trivy-dependencias]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       contents: read
       packages: write
@@ -68,6 +137,47 @@ jobs:
 
       - name: Verificar se a imagem foi criada
         run: docker image inspect "${REGISTRY}/${IMAGE_NAME}:${IMAGE_VERSION}"
+
+      - name: Gerar SBOM da imagem com Syft
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          syft-version: v1.55.0
+          image: docker:${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+          artifact-name: sbom-imagem
+          upload-artifact-retention: 14
+          upload-release-assets: false
+
+      - name: Gerar relatório da imagem com todas as severidades
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.1
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+          scanners: vuln
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+          format: json
+          output: trivy-imagem.json
+
+      - name: Bloquear imagem com HIGH e CRITICAL corrigíveis
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          skip-setup-trivy: true
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: Salvar relatório da imagem
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trivy-imagem
+          path: trivy-imagem.json
+          retention-days: 14
 
       - name: Autenticar no GitHub Container Registry
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

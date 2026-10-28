@@ -91,12 +91,12 @@ O arquivo [.github/workflows/docker.yml](.github/workflows/docker.yml) configura
 a execução automática em pushes para `main` e `feat/devsecops`, além da abertura,
 reabertura e atualização de Pull Requests para `main`. O fluxo é:
 
-1. Baixar o histórico completo e executar a detecção de secrets com Gitleaks.
-2. Salvar o relatório do Gitleaks como artifact, inclusive quando houver detecções.
-3. Após a aprovação do Gitleaks, construir a imagem com o `Dockerfile` da raiz.
-4. Verificar a existência da imagem com `docker image inspect`.
-5. Somente em push para `main`, autenticar no GitHub Container Registry (GHCR)
-   e publicar `ghcr.io/mateusmendes0/atividadedevops:2.0`.
+1. Executar Gitleaks, testes e Trivy nas dependências.
+2. Após a aprovação dessas verificações, construir a imagem Docker.
+3. Gerar o SBOM da imagem com Syft e analisar a imagem com Trivy.
+4. Salvar os relatórios e o SBOM como artifacts da execução.
+5. Somente em push para `main`, publicar a imagem no GHCR após todas as
+   verificações obrigatórias passarem.
 
 A autenticação utiliza `secrets.GITHUB_TOKEN`, fornecido automaticamente pelo
 GitHub Actions, com as permissões `contents: read` e `packages: write` declaradas
@@ -138,6 +138,52 @@ Os resultados da validação local estão em
 [evidencias/validacao-gitleaks-local.txt](evidencias/validacao-gitleaks-local.txt).
 Esses testes não substituem a evidência de execução do GitHub Actions e do
 bloqueio de merge exigida pela atividade.
+
+O Gitleaks e o build também foram aprovados no GitHub Actions. Os links e os
+resultados estão em
+[evidencias/validacao-gitleaks-github.txt](evidencias/validacao-gitleaks-github.txt).
+
+## Testes da aplicação
+
+O teste automatizado verifica o status HTTP, a mensagem `Hello World 2` e o
+tipo de resposta em texto puro do endpoint `/hello`. Para executar localmente:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m coverage run --branch --source=main -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m coverage xml
+```
+
+O relatório `coverage.xml` é disponibilizado no artifact `cobertura`.
+
+## Análise de vulnerabilidades com Trivy
+
+O Trivy analisa os arquivos de dependências do projeto e a imagem Docker
+construída. Cada análise gera um relatório JSON com todas as severidades,
+incluindo vulnerabilidades sem correção disponível.
+
+Uma segunda verificação bloqueia a execução quando encontra vulnerabilidades
+**HIGH** ou **CRITICAL** com correção disponível. Vulnerabilidades **LOW** e
+**MEDIUM** ficam registradas no relatório e não bloqueiam a execução.
+Erros na ferramenta ou na obtenção da base de vulnerabilidades fazem o job
+falhar; o código de saída zero da etapa de relatório não desativa o bloqueio.
+
+Os artifacts `trivy-dependencias` e `trivy-imagem` guardam os relatórios por
+14 dias, inclusive quando a verificação seguinte encontra uma vulnerabilidade.
+
+## SBOM da imagem com Syft
+
+O Syft, executado pela action `anchore/sbom-action`, gera o inventário dos
+componentes e versões da imagem que acabou de ser construída. O arquivo
+`sbom.spdx.json` fica disponível no artifact `sbom-imagem` por 14 dias.
+O SBOM é gerado antes do bloqueio do Trivy na imagem, permitindo consultar
+seus componentes mesmo quando essa verificação reprova a imagem.
+
+## SonarCloud
+
+A integração do SonarCloud com Quality Gate ainda depende da criação e
+configuração do projeto no serviço. Essa etapa e a demonstração de bloqueio
+e correção em Pull Request ainda estão pendentes.
 
 ## Versões da imagem no GHCR
 

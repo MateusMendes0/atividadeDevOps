@@ -1,0 +1,17 @@
+Validação do Gitleaks no GitHub Actions
+
+Branch: feat/devsecops
+Commit: 20633d7
+Execução: https://github.com/MateusMendes0/atividadeDevOps/actions/runs/40619772174
+
+Resultados:
+- Gitleaks aprovado.
+- Relatório gitleaks-report salvo como artifact.
+- Build da imagem Docker aprovado.
+- Login e publicação no GHCR não executados, pois a branch não era main.
+
+Pull Request de implementação:
+https://github.com/MateusMendes0/atividadeDevOps/pull/1
+
+Esta execução comprova o funcionamento inicial do Gitleaks e do build.
+A demonstração de uma falha de segurança em PR ainda será realizada.
