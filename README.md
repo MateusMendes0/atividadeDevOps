@@ -88,20 +88,56 @@ Resposta esperada: status `HTTP/1.1 200 OK` e corpo `Hello World 2`.
 ## Pipeline do GitHub Actions
 
 O arquivo [.github/workflows/docker.yml](.github/workflows/docker.yml) configura
-a execução automática em cada push para a branch `main`. O fluxo é:
+a execução automática em pushes para `main` e `feat/devsecops`, além da abertura,
+reabertura e atualização de Pull Requests para `main`. O fluxo é:
 
-1. Baixar o código do repositório.
-2. Construir a imagem com o `Dockerfile` da raiz.
-3. Verificar a existência da imagem com `docker image inspect`.
-4. Autenticar no GitHub Container Registry (GHCR).
-5. Publicar `ghcr.io/mateusmendes0/atividadedevops:2.0`.
+1. Baixar o histórico completo e executar a detecção de secrets com Gitleaks.
+2. Salvar o relatório do Gitleaks como artifact, inclusive quando houver detecções.
+3. Após a aprovação do Gitleaks, construir a imagem com o `Dockerfile` da raiz.
+4. Verificar a existência da imagem com `docker image inspect`.
+5. Somente em push para `main`, autenticar no GitHub Container Registry (GHCR)
+   e publicar `ghcr.io/mateusmendes0/atividadedevops:2.0`.
 
 A autenticação utiliza `secrets.GITHUB_TOKEN`, fornecido automaticamente pelo
 GitHub Actions, com as permissões `contents: read` e `packages: write` declaradas
-no workflow. Não é necessário cadastrar um token manualmente para este fluxo.
+no job `build-and-push`. O job Gitleaks tem apenas `contents: read`.
+Não é necessário cadastrar um token manualmente para este fluxo.
 
 A versão da imagem é definida em `IMAGE_VERSION`, atualmente `2.0`.
 O push para `main` dispara uma nova execução da pipeline e publica essa tag.
+
+## Segurança com Gitleaks
+
+O check **Gitleaks** utiliza a imagem Docker oficial
+`ghcr.io/gitleaks/gitleaks:v8.30.1`, executada diretamente pelo GitHub Actions,
+com as regras padrão da ferramenta. Não exige instalação manual nem um secret
+ou token adicional.
+
+O checkout usa `fetch-depth: 0`, e a análise usa `gitleaks git` com
+`--log-opts=--all` para examinar todo o histórico das referências disponíveis
+no checkout. Assim, uma credencial pode ser detectada mesmo após ser removida
+da versão atual de um arquivo.
+
+Uma possível credencial exposta faz a verificação terminar com código `1`.
+Como `build-and-push` depende desse job, a falha impede o build e a publicação
+da imagem. Erros ao baixar a imagem do Gitleaks ou executar a análise também
+fazem o job falhar.
+Pushes na branch de implementação e Pull Requests nunca publicam imagens.
+
+Os logs mostram o local das detecções, e `--redact=100` oculta os valores dos
+secrets nos logs e no relatório. O arquivo JSON fica disponível no artifact
+`gitleaks-report` por 14 dias, inclusive quando a análise encontra problemas.
+Se a execução falhar antes de gerar o relatório, o artifact não estará disponível.
+
+Testes de detecção devem usar somente credenciais fictícias. Não inclua uma
+credencial de teste no histórico principal: mesmo apagando o arquivo em outro
+commit, o histórico continuará contendo a detecção. As validações locais de
+detecção podem ser feitas em um repositório temporário separado.
+
+Os resultados da validação local estão em
+[evidencias/validacao-gitleaks-local.txt](evidencias/validacao-gitleaks-local.txt).
+Esses testes não substituem a evidência de execução do GitHub Actions e do
+bloqueio de merge exigida pela atividade.
 
 ## Versões da imagem no GHCR
 

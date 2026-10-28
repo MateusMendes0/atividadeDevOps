@@ -1,0 +1,20 @@
+Validação local do Gitleaks
+
+Branch: feat/devsecops
+
+Resultados dos testes:
+1. Configuração do workflow validada com actionlint.
+2. Histórico atual do projeto analisado, sem secrets detectados.
+3. Repositório de teste sem credenciais aprovado na análise.
+4. Credencial fictícia detectada, fazendo a análise falhar.
+5. Valor da credencial oculto no relatório.
+6. Mesmo após apagar o arquivo, a credencial continuou sendo detectada
+   no histórico de commits.
+
+Os testes com a credencial fictícia foram feitos em um repositório temporário
+separado, sem adicionar essa credencial ao projeto.
+
+Os testes locais verificaram a detecção do Gitleaks. O workflow foi simplificado
+para usar a imagem Docker oficial, mantendo a análise de todo o histórico.
+Ainda falta executar essa integração no GitHub Actions e comprovar o bloqueio
+de merge com a proteção da branch configurada.
