@@ -5,8 +5,6 @@ Repositório: https://github.com/MateusMendes0/atividadeDevOps
 Configuração aplicada e confirmada pela API do GitHub:
 - Alterações na main devem passar por Pull Request.
 - A branch do PR deve estar atualizada com a main.
-- Checks obrigatórios: Gitleaks, Testes, Trivy - dependências e
-  Imagem, Trivy e SBOM.
+- Checks obrigatórios: Gitleaks, Testes, SonarCloud, Trivy - dependências
+  e Imagem, Trivy e SBOM.
 - As regras também se aplicam aos administradores.
-
-O SonarCloud será acrescentado aos checks obrigatórios após sua integração.

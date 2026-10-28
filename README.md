@@ -161,6 +161,10 @@ tipo de resposta em texto puro do endpoint `/hello`. Para executar localmente:
 
 O relatório `coverage.xml` é disponibilizado no artifact `cobertura`.
 
+As dependências diretas ficam nos arquivos `.in`. Os arquivos `.txt` são
+gerados com pip-tools e travam também as versões indiretas e seus hashes.
+O Docker e os testes instalam apenas pacotes binários com hashes verificados.
+
 ## Análise de vulnerabilidades com Trivy
 
 O Trivy analisa os arquivos de dependências do projeto e a imagem Docker
